@@ -143,11 +143,34 @@ async function readJsonFile(filePath, fallback) {
 }
 
 function extractTaggedJson(text) {
-  const match = text.match(/<bob-review>\s*([\s\S]*?)\s*<\/bob-review>/i);
-  if (!match) {
-    throw new Error("Bob output did not contain <bob-review>...</bob-review> tags.");
+    const candidates = [
+      text.match(/<bob-review>\s*([\s\S]*?)\s*<\/bob-review>/i)?.[1],
+      text.match(/```json\s*([\s\S]*?)\s*```/i)?.[1],
+      text.match(/```\s*([\s\S]*?)\s*```/i)?.[1],
+      findFirstJsonObject(text),
+      text.trim(),
+    ].filter(Boolean);
+
+    for (const candidate of candidates) {
+      try {
+        return JSON.parse(candidate.trim());
+      } catch {
+        // Try the next candidate format.
+      }
+    }
+
+    throw new Error(
+      "Bob output did not contain parseable review JSON. Expected tagged JSON, fenced JSON, or a raw JSON object.",
+    );
   }
-  return JSON.parse(match[1]);
+
+function findFirstJsonObject(text) {
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start === -1 || end === -1 || end <= start) {
+      return null;
+    }
+    return text.slice(start, end + 1);
 }
 
 function normalizeReview(raw) {

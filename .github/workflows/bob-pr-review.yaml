@@ -49,9 +49,6 @@ jobs:
           CI: "true"
         run: curl -fsSL https://bob.ibm.com/download/bobshell.sh | bash -s -- --pm npm
 
-      - name: Accept Bob license
-        run: bob --accept-license
-
       - name: Run Bob review
         id: bob_review
         env:
@@ -60,6 +57,7 @@ jobs:
           set +e
           mkdir -p artifacts
           bob_args=(
+            --accept-license
             --auth-method api-key
             --chat-mode ask
             --hide-intermediary-output
